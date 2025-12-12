@@ -35,8 +35,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const status = error.response?.status;
-    const errorMessage = error.response?.data?.error || '';
-    const config = error.config;
     
     // 401 에러는 인증 실패이므로 로그아웃 처리
     // 단, 이미 로그아웃 처리 중이거나, 로그인/회원가입 페이지에서는 처리하지 않음

@@ -56,6 +56,19 @@ interface Issue {
       color: string;
     };
   }>;
+  attachments?: Array<{
+    id: string;
+    filename?: string;
+    originalName?: string;
+    size: number;
+    mimeType: string;
+    createdAt: string;
+    uploadedBy?: {
+      id: string;
+      username: string;
+      name?: string;
+    };
+  }>;
   comments: Comment[];
   createdAt: string;
 }
@@ -121,7 +134,13 @@ export const IssueDetail = () => {
       // 활동 로그 갱신
       queryClient.invalidateQueries({ queryKey: ['activities', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activities', projectId, issueId] });
-      const newCommentId = data.comment.id;
+      const newCommentId = data?.comment?.id;
+      if (!newCommentId) {
+        toast.success('댓글이 등록되었습니다.');
+        setCommentContent('');
+        setPendingCommentFiles([]);
+        return;
+      }
       setCommentContent('');
 
       // 댓글 생성 후 대기 중인 파일이 있으면 업로드
@@ -175,7 +194,7 @@ export const IssueDetail = () => {
       const response = await api.put(`/comments/${commentId}`, { content });
       return response.data;
     },
-    onSuccess: async (data, variables) => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['issue', issueId] });
       queryClient.invalidateQueries({ queryKey: ['activities', projectId] });
       queryClient.invalidateQueries({ queryKey: ['activities', projectId, issueId] });

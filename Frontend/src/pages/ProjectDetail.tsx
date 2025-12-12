@@ -74,7 +74,6 @@ export const ProjectDetail = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [priorityFilter, setPriorityFilter] = useState<string>('');
   const [assigneeFilter, setAssigneeFilter] = useState<string>('');
@@ -138,6 +137,8 @@ export const ProjectDetail = () => {
     enabled: !!project, // 프로젝트가 로드된 후에만 실행
     retry: false,
   });
+
+  const issueList = issues?.issues ?? [];
 
   // 프로젝트 멤버 목록 (담당자 필터용)
   const { data: membersData } = useQuery<{ members: Array<{ userId: string; user: User }> }>({
@@ -453,7 +454,7 @@ export const ProjectDetail = () => {
 
         {viewMode !== 'dashboard' && (
           <>
-            {issues?.issues.length === 0 ? (
+            {issueList.length === 0 ? (
               <div className="text-center py-12 bg-white rounded-lg shadow">
                 <p className="text-gray-500 mb-4">이슈가 없습니다.</p>
                 <button
@@ -464,10 +465,10 @@ export const ProjectDetail = () => {
                 </button>
               </div>
             ) : viewMode === 'kanban' ? (
-              <KanbanBoard issues={issues.issues} projectId={id!} canEdit={canEdit} />
+              <KanbanBoard issues={issueList} projectId={id!} canEdit={canEdit} />
             ) : (
               <div className="space-y-4">
-                {issues?.issues.map((issue) => (
+                {issueList.map((issue) => (
                   <div
                     key={issue.id}
                     className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"

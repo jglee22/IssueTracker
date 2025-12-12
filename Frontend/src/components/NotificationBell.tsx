@@ -69,7 +69,7 @@ export const NotificationBell = () => {
               <button
                 onClick={() => markAllRead.mutate()}
                 className="text-xs text-indigo-600 hover:text-indigo-700"
-                disabled={markAllRead.isLoading || unreadCount === 0}
+                disabled={markAllRead.isPending || unreadCount === 0}
               >
                 모두 읽음
               </button>
@@ -117,7 +117,7 @@ export const NotificationBell = () => {
                       <button
                         onClick={() => markRead.mutate(n.id)}
                         className="text-xs text-indigo-600 hover:text-indigo-700"
-                        disabled={markRead.isLoading}
+                        disabled={markRead.isPending}
                       >
                         읽음
                       </button>

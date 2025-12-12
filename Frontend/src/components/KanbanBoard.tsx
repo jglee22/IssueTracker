@@ -136,7 +136,7 @@ function SortableIssueCard({ issue, projectId, canEdit }: SortableIssueCardProps
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
+  const handleCardClick = () => {
     // 드래그 중이 아닐 때만 클릭 처리
     if (!isDragging) {
       navigate(`/projects/${projectId}/issues/${issue.id}`);

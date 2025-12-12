@@ -45,15 +45,6 @@ export const EditIssue = () => {
     },
   });
 
-  // 사용자 목록 조회
-  const { data: users } = useQuery({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await api.get('/users');
-      return response.data;
-    },
-  });
-
   useEffect(() => {
     if (data?.issue) {
       setFormData({

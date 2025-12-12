@@ -87,11 +87,12 @@ const getActivityMessage = (activity: Activity): string => {
 };
 
 export const ActivityLog = ({ projectId, issueId, limit = 50 }: ActivityLogProps) => {
-  const endpoint = issueId
+  const baseEndpoint = issueId
     ? `/issues/${issueId}/activities`
     : projectId
     ? `/projects/${projectId}/activities`
     : null;
+  const endpoint = baseEndpoint ? `${baseEndpoint}?limit=${limit}` : null;
 
   const { data, isLoading } = useQuery<{ activities: Activity[] }>({
     queryKey: ['activities', projectId, issueId],

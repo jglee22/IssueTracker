@@ -65,7 +65,7 @@ export const AdminUsers = () => {
     },
   });
 
-  const handleApprove = (userId: string, currentRole: UserRole) => {
+  const handleApprove = (userId: string) => {
     const makeAdmin = window.confirm('관리자로 승인하시겠습니까? (확인: 관리자 / 취소: 일반 사용자)');
     approveUser.mutate({ userId, makeAdmin });
   };
@@ -180,8 +180,8 @@ export const AdminUsers = () => {
                         <div className="flex justify-end gap-2">
                           {u.status !== 'ACTIVE' && (
                             <button
-                              onClick={() => handleApprove(u.id, u.role)}
-                              disabled={approveUser.isLoading}
+                              onClick={() => handleApprove(u.id)}
+                              disabled={approveUser.isPending}
                               className="px-3 py-1 text-sm bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-50"
                             >
                               승인
@@ -190,7 +190,7 @@ export const AdminUsers = () => {
                           {u.status !== 'REJECTED' && currentUser?.id !== u.id && (
                             <button
                               onClick={() => handleReject(u.id)}
-                              disabled={rejectUser.isLoading}
+                              disabled={rejectUser.isPending}
                               className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
                             >
                               거절

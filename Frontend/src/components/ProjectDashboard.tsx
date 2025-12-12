@@ -48,7 +48,7 @@ interface StatisticsData {
   recentIssues: Issue[];
 }
 
-export const ProjectDashboard = ({ projectId, userId }: ProjectDashboardProps) => {
+export const ProjectDashboard = ({ projectId }: ProjectDashboardProps) => {
   const { data, isLoading } = useQuery<StatisticsData>({
     queryKey: ['projectStatistics', projectId],
     queryFn: async () => {
@@ -122,7 +122,8 @@ export const ProjectDashboard = ({ projectId, userId }: ProjectDashboardProps) =
                 labelLine={true}
                 label={({ name, value, percent }) => {
                   if (value === 0) return '';
-                  return `${name}\n${value}개 (${(percent * 100).toFixed(1)}%)`;
+                  const safePercent = percent ?? 0;
+                  return `${name}\n${value}개 (${(safePercent * 100).toFixed(1)}%)`;
                 }}
                 outerRadius={80}
                 fill="#8884d8"
@@ -133,7 +134,7 @@ export const ProjectDashboard = ({ projectId, userId }: ProjectDashboardProps) =
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number, name: string, props: any) => {
+                formatter={(value: number, name: string, _props: any) => {
                   const total = data.statusData.reduce((sum, item) => sum + item.value, 0);
                   const percent = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                   return [`${value}개 (${percent}%)`, name];

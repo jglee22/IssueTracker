@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const initialState = getInitialState();
   const [user, setUser] = useState<User | null>(initialState.user);
   const [token, setToken] = useState<string | null>(initialState.token);
-  const [isInitialized, setIsInitialized] = useState(true); // 초기화 완료 상태
+  const [isInitialized, _setIsInitialized] = useState(true); // 초기화 완료 상태
 
   // localStorage 변경 감지 (다른 탭에서 로그아웃 등)
   useEffect(() => {

@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import api from '../lib/api';
-import { FileAttachment } from '../components/FileAttachment';
 
 export const CreateIssue = () => {
   const { id: projectId } = useParams<{ id: string }>();
