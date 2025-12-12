@@ -191,9 +191,20 @@ export const Dashboard = () => {
                 )}
                 
                 {/* 상태별 이슈 미니 바 */}
-                {project.statusData && (() => {
+                {(() => {
+                  if (!project.statusData) return null;
                   const total = project.statusData.OPEN + project.statusData.IN_PROGRESS + project.statusData.RESOLVED + project.statusData.CLOSED;
                   const completed = project.statusData.RESOLVED + project.statusData.CLOSED;
+                  
+                  if (total === 0) {
+                    return (
+                      <div className="mb-3 flex items-center gap-2">
+                        <span className="text-xs text-gray-500">진행도:</span>
+                        <span className="text-xs text-gray-400">이슈 없음</span>
+                      </div>
+                    );
+                  }
+                  
                   return (
                     <div className="mb-3 flex items-center gap-2">
                       <span className="text-xs text-gray-500">진행도:</span>
