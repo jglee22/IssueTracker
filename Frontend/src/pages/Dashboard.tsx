@@ -71,15 +71,6 @@ export const Dashboard = () => {
     return `${userName}님이 ${typeMap[activityType] || '활동'}함`;
   };
 
-  const getStatusBar = (statusData?: Project['statusData']): string => {
-    if (!statusData) return '○○○○○';
-    const total = statusData.OPEN + statusData.IN_PROGRESS + statusData.RESOLVED + statusData.CLOSED;
-    if (total === 0) return '○○○○○';
-    
-    const completed = statusData.RESOLVED + statusData.CLOSED;
-    const filled = Math.min(5, Math.ceil((completed / total) * 5));
-    return '●'.repeat(filled) + '○'.repeat(5 - filled);
-  };
 
   const getCardBorderColor = (project: Project): string => {
     const hasInProgress = (project.statusData?.IN_PROGRESS || 0) > 0;
@@ -190,7 +181,7 @@ export const Dashboard = () => {
                   <p className="text-gray-600 mb-4 line-clamp-2">{project.description}</p>
                 )}
                 
-                {/* 상태별 이슈 미니 바 */}
+                {/* 진행도 표시 */}
                 {(() => {
                   if (!project.statusData) return null;
                   const total = project.statusData.OPEN + project.statusData.IN_PROGRESS + project.statusData.RESOLVED + project.statusData.CLOSED;
@@ -208,11 +199,8 @@ export const Dashboard = () => {
                   return (
                     <div className="mb-3 flex items-center gap-2">
                       <span className="text-xs text-gray-500">진행도:</span>
-                      <span 
-                        className="text-sm font-mono" 
-                        title={`완료: ${completed}개 / 전체: ${total}개`}
-                      >
-                        {getStatusBar(project.statusData)}
+                      <span className="text-sm font-semibold text-gray-900">
+                        {completed}/{total}
                       </span>
                     </div>
                   );
