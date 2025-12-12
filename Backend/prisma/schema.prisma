@@ -1,0 +1,231 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  name      String?
+  status    UserStatus @default(ACTIVE)
+  role      UserRole   @default(MEMBER)
+  rejectionReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projects      Project[]
+  projectMembers ProjectMember[]
+  authorIssues  Issue[]  @relation("IssueAuthor")
+  assignedIssues Issue[] @relation("IssueAssignee")
+  comments      Comment[]
+  activities    Activity[]
+  notifications Notification[]
+  uploadedAttachments Attachment[] @relation("AttachmentUploader")
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  ownerId     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members ProjectMember[]
+  issues Issue[]
+  activities Activity[]
+
+  @@index([ownerId])
+}
+
+model Issue {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  status      IssueStatus @default(OPEN)
+  priority    Priority    @default(MEDIUM)
+  projectId   String
+  authorId    String
+  assigneeId  String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  author   User      @relation("IssueAuthor", fields: [authorId], references: [id])
+  assignee User?     @relation("IssueAssignee", fields: [assigneeId], references: [id])
+  comments Comment[]
+  labels   IssueLabel[]
+  activities Activity[]
+  attachments Attachment[]
+
+  @@index([projectId])
+  @@index([authorId])
+  @@index([status])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  issueId   String
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  issue  Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+  attachments Attachment[]
+
+  @@index([issueId])
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("#3B82F6")
+  createdAt DateTime @default(now())
+
+  issues IssueLabel[]
+}
+
+model IssueLabel {
+  id      String @id @default(cuid())
+  issueId String
+  labelId String
+
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@unique([issueId, labelId])
+  @@index([issueId])
+  @@index([labelId])
+}
+
+enum IssueStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model ProjectMember {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String
+  role      ProjectRole @default(VIEWER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+enum ProjectRole {
+  OWNER
+  MEMBER
+  VIEWER
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  type      ActivityType
+  projectId String?
+  issueId   String?
+  userId    String
+  metadata  Json?    // 변경 전/후 값, 추가 정보 등
+  createdAt DateTime @default(now())
+
+  project Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issue   Issue?   @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([issueId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum ActivityType {
+  ISSUE_CREATED
+  ISSUE_UPDATED
+  ISSUE_DELETED
+  ISSUE_STATUS_CHANGED
+  ISSUE_ASSIGNEE_CHANGED
+  ISSUE_LABEL_ADDED
+  ISSUE_LABEL_REMOVED
+  COMMENT_CREATED
+  COMMENT_DELETED
+  PROJECT_UPDATED
+  PROJECT_MEMBER_ADDED
+  PROJECT_MEMBER_REMOVED
+  PROJECT_MEMBER_ROLE_CHANGED
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
+  @@index([createdAt])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  filename  String
+  originalName String
+  mimeType  String
+  size      Int      // bytes
+  path      String   // 서버에 저장된 파일 경로
+  issueId   String?
+  commentId String?
+  uploadedById String
+  createdAt DateTime @default(now())
+
+  issue     Issue?    @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  comment   Comment?  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  uploadedBy User      @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+
+  @@index([issueId])
+  @@index([commentId])
+  @@index([uploadedById])
+}
+
