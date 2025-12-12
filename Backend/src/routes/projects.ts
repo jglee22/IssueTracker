@@ -5,6 +5,62 @@ import { createActivity } from '../utils/activity';
 
 const router = Router();
 
+// 전체 통계 조회 (대시보드 요약 카드용)
+router.get('/statistics', authenticateToken, async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId!;
+
+    // 사용자가 접근 가능한 프로젝트 ID 목록
+    const accessibleProjects = await prisma.project.findMany({
+      where: {
+        OR: [
+          { ownerId: userId },
+          { members: { some: { userId } } },
+        ],
+      },
+      select: { id: true },
+    });
+    const projectIds = accessibleProjects.map(p => p.id);
+
+    // 전체 프로젝트 수
+    const totalProjects = accessibleProjects.length;
+
+    // 전체 이슈 수
+    const totalIssues = await prisma.issue.count({
+      where: {
+        projectId: { in: projectIds },
+      },
+    });
+
+    // 진행 중 이슈 수
+    const inProgressIssues = await prisma.issue.count({
+      where: {
+        projectId: { in: projectIds },
+        status: 'IN_PROGRESS',
+      },
+    });
+
+    // 해결률 계산 (RESOLVED + CLOSED / 전체)
+    const resolvedIssues = await prisma.issue.count({
+      where: {
+        projectId: { in: projectIds },
+        status: { in: ['RESOLVED', 'CLOSED'] },
+      },
+    });
+    const resolutionRate = totalIssues > 0 ? Math.round((resolvedIssues / totalIssues) * 100) : 0;
+
+    res.json({
+      totalProjects,
+      totalIssues,
+      inProgressIssues,
+      resolutionRate,
+    });
+  } catch (error) {
+    console.error('Get statistics error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // 모든 프로젝트 조회 (인증 필요) - 소유한 프로젝트 + 멤버로 참여한 프로젝트
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
   try {
@@ -31,13 +87,77 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             issues: true,
           },
         },
+        issues: {
+          select: {
+            status: true,
+            updatedAt: true,
+          },
+          orderBy: {
+            updatedAt: 'desc',
+          },
+          take: 1,
+        },
+        activities: {
+          select: {
+            type: true,
+            createdAt: true,
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          take: 1,
+        },
       },
       orderBy: {
-        createdAt: 'desc',
+        updatedAt: 'desc',
       },
     });
 
-    res.json({ projects });
+    // 각 프로젝트에 대한 상태별 이슈 수 계산
+    const projectsWithStats = await Promise.all(
+      projects.map(async (project) => {
+        const statusCounts = await prisma.issue.groupBy({
+          by: ['status'],
+          where: { projectId: project.id },
+          _count: { id: true },
+        });
+
+        const statusData = {
+          OPEN: statusCounts.find((s) => s.status === 'OPEN')?._count.id || 0,
+          IN_PROGRESS: statusCounts.find((s) => s.status === 'IN_PROGRESS')?._count.id || 0,
+          RESOLVED: statusCounts.find((s) => s.status === 'RESOLVED')?._count.id || 0,
+          CLOSED: statusCounts.find((s) => s.status === 'CLOSED')?._count.id || 0,
+        };
+
+        const totalIssues = Object.values(statusData).reduce((sum, count) => sum + count, 0);
+        const resolvedCount = statusData.RESOLVED + statusData.CLOSED;
+        const resolutionRate = totalIssues > 0 ? Math.round((resolvedCount / totalIssues) * 100) : 0;
+
+        // 마지막 업데이트 날짜 (이슈 또는 프로젝트)
+        const lastIssueUpdate = project.issues[0]?.updatedAt;
+        const lastUpdate = lastIssueUpdate && lastIssueUpdate > project.updatedAt 
+          ? lastIssueUpdate 
+          : project.updatedAt;
+
+        // 최근 활동
+        const recentActivity = project.activities[0];
+
+        return {
+          ...project,
+          statusData,
+          resolutionRate,
+          lastUpdate,
+          recentActivity,
+        };
+      })
+    );
+
+    res.json({ projects: projectsWithStats });
   } catch (error) {
     console.error('Get projects error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Internal server error';
