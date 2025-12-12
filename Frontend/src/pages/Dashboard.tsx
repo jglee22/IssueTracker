@@ -192,8 +192,13 @@ export const Dashboard = () => {
                 {/* 상태별 이슈 미니 바 */}
                 {project.statusData && (
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">상태:</span>
-                    <span className="text-sm font-mono">{getStatusBar(project.statusData)}</span>
+                    <span className="text-xs text-gray-500">진행도:</span>
+                    <span 
+                      className="text-sm font-mono" 
+                      title={`진행 중: ${project.statusData.IN_PROGRESS}개, 전체: ${project.statusData.OPEN + project.statusData.IN_PROGRESS + project.statusData.RESOLVED + project.statusData.CLOSED}개`}
+                    >
+                      {getStatusBar(project.statusData)}
+                    </span>
                   </div>
                 )}
 
