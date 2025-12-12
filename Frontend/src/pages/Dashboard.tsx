@@ -76,7 +76,8 @@ export const Dashboard = () => {
     const total = statusData.OPEN + statusData.IN_PROGRESS + statusData.RESOLVED + statusData.CLOSED;
     if (total === 0) return '○○○○○';
     
-    const filled = Math.min(5, Math.ceil((statusData.IN_PROGRESS / total) * 5));
+    const completed = statusData.RESOLVED + statusData.CLOSED;
+    const filled = Math.min(5, Math.ceil((completed / total) * 5));
     return '●'.repeat(filled) + '○'.repeat(5 - filled);
   };
 
@@ -190,17 +191,21 @@ export const Dashboard = () => {
                 )}
                 
                 {/* 상태별 이슈 미니 바 */}
-                {project.statusData && (
-                  <div className="mb-3 flex items-center gap-2">
-                    <span className="text-xs text-gray-500">진행도:</span>
-                    <span 
-                      className="text-sm font-mono" 
-                      title={`진행 중: ${project.statusData.IN_PROGRESS}개, 전체: ${project.statusData.OPEN + project.statusData.IN_PROGRESS + project.statusData.RESOLVED + project.statusData.CLOSED}개`}
-                    >
-                      {getStatusBar(project.statusData)}
-                    </span>
-                  </div>
-                )}
+                {project.statusData && (() => {
+                  const total = project.statusData.OPEN + project.statusData.IN_PROGRESS + project.statusData.RESOLVED + project.statusData.CLOSED;
+                  const completed = project.statusData.RESOLVED + project.statusData.CLOSED;
+                  return (
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="text-xs text-gray-500">진행도:</span>
+                      <span 
+                        className="text-sm font-mono" 
+                        title={`완료: ${completed}개 / 전체: ${total}개`}
+                      >
+                        {getStatusBar(project.statusData)}
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* 최근 활동 */}
                 {project.recentActivity && (
