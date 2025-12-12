@@ -37,8 +37,11 @@ const allowedOrigins = process.env.CORS_ORIGIN
 app.use(
   cors({
     origin: (origin, callback) => {
+      const isVercelPreview = origin?.endsWith('.vercel.app');
+      const isRailway = origin?.includes('.up.railway.app');
+
       // 개발 환경에서는 origin이 없는 요청도 허용 (Postman 등)
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || isVercelPreview || isRailway) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
@@ -47,6 +50,8 @@ app.use(
     credentials: true,
   })
 );
+// 프리플라이트(OPTIONS) 전역 허용
+app.options('*', cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // 정적 파일 서빙 (업로드된 파일)
