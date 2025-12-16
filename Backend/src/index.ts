@@ -19,7 +19,7 @@ import attachmentRoutes from './routes/attachments';
 
 dotenv.config();
 
-const app = express();
+export const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS 설정
@@ -162,5 +162,9 @@ async function startServer() {
   });
 }
 
-startServer();
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+}
+
+export default app;
 
